@@ -88,38 +88,59 @@
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
-const int buzzer = 8;
+// notes in the melody:
+int melody[] = {
+  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+};
 
-// First value is amount of elements
-int melody1[] = {7, NOTE_E5, NOTE_E5, NOTE_E5, NOTE_A5, NOTE_E5, NOTE_A5};
-int duration1[] =   {0, 250,    250,    250,    500,    250,    125};
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = {
+  4, 8, 8, 4, 4, 4, 4, 4
+};
 
-int melody_start[] = {7, NOTE_C4,   NOTE_C4,   NOTE_C4,   NOTE_C4, 0,   NOTE_E5};
-int duration_start[] =   {0, 1000,   500,      500,       250,     100, 750};
+int melody2[] = {
+  NOTE_E4,  NOTE_D4, NOTE_C4,   NOTE_D4,  NOTE_E4,    NOTE_E4,  NOTE_E4,  NOTE_E4
+};
+
+int noteDurations2[] = {
+  4,        8,        8,        4,        4,          4,        4,        4
+};
+
+void play_dut_dut() {
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
 
 
-void play_melody(int melody[], int duration[]) {
-  for (int i = 1; i < melody[0]; i++) {
-    Serial.print(i);
-    Serial.print(" ");
-    Serial.println(melody[i]);
-    if (melody[i] != 0) {
-      tone(buzzer, melody[i]);
-    }
-    delay(duration[i]);
-    noTone(buzzer);
-    delay(duration[i] * 0.3);
+    int noteDuration = 1000 / noteDurations2[thisNote];
+    tone(8, melody2[thisNote], noteDuration);
 
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    noTone(8);
   }
 }
 
+void play_dut_dut_no_dur() {
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+
+    tone(8, melody2[thisNote], 250);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = 250 * 1.30;
+    delay(pauseBetweenNotes);
+
+    noTone(8);
+  }
+}
 
 void setup() {
-  Serial.begin(9600);
-  pinMode(buzzer, OUTPUT);
-  play_melody( melody_start, duration_start );
+play_dut_dut_no_dur();
 }
 
 void loop() {
-
+  
 }
