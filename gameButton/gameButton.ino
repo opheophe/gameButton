@@ -102,6 +102,10 @@ int cable_1_led = 11;
 int cable_1_button = 12;
 int cable_2_led = 10;
 int cable_2_button = 9;
+int cable_3_led = 7;
+int cable_3_button = 8;
+
+
 int buzzer = 13;
 
 int set_button = A5;
@@ -133,6 +137,8 @@ void setup() {
   pinMode(cable_1_led, OUTPUT);
   pinMode(cable_2_button, INPUT_PULLUP);
   pinMode(cable_2_led, OUTPUT);
+  pinMode(cable_3_button, INPUT_PULLUP);
+  pinMode(cable_3_led, OUTPUT);
   pinMode(set_button, INPUT_PULLUP);
   pinMode(reset_button, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
@@ -178,10 +184,12 @@ void loop() {
           blink_status = 1;
           digitalWrite(cable_1_led, HIGH);
           digitalWrite(cable_2_led, HIGH);
+          digitalWrite(cable_3_led, HIGH);
         } else {
           blink_status = 0;
           digitalWrite(cable_1_led, LOW);
           digitalWrite(cable_2_led, LOW);
+          digitalWrite(cable_3_led, LOW);
         }
         Serial.println("Blink");
       }
@@ -192,10 +200,17 @@ void loop() {
         case 1:
           digitalWrite(cable_1_led, HIGH);
           digitalWrite(cable_2_led, LOW);
+          digitalWrite(cable_3_led, LOW);
           break;
         case 2:
           digitalWrite(cable_1_led, LOW);
           digitalWrite(cable_2_led, HIGH);
+          digitalWrite(cable_3_led, LOW);
+          break;
+        case 3:
+          digitalWrite(cable_1_led, LOW);
+          digitalWrite(cable_2_led, LOW);
+          digitalWrite(cable_3_led, HIGH);
           break;
         default:
 
@@ -218,6 +233,7 @@ void loop() {
       status = 3;
       digitalWrite(cable_1_led, HIGH);
       digitalWrite(cable_2_led, HIGH);
+      digitalWrite(cable_3_led, HIGH);
       play_melody( melody_1, duration_1 );
     } else {
       play_melody( melody_error, duration_error );
@@ -232,12 +248,26 @@ void loop() {
       status = 3;
       digitalWrite(cable_1_led, HIGH);
       digitalWrite(cable_2_led, HIGH);
+      digitalWrite(cable_3_led, HIGH);
       play_melody( melody_1, duration_1 );
     } else {
       play_melody( melody_error, duration_error );
     }
   }
-
+  int buttonVal_3 = digitalRead(cable_3_button);
+  if (buttonVal_3 == LOW) {
+    Serial.println("Button 2 pressed");
+    if (status == 2) {
+      winner = 3;
+      status = 3;
+      digitalWrite(cable_1_led, HIGH);
+      digitalWrite(cable_2_led, HIGH);
+      digitalWrite(cable_3_led, HIGH);
+      play_melody( melody_1, duration_1 );
+    } else {
+      play_melody( melody_error, duration_error );
+    }
+  }
 
 
   int buttonVal_set = digitalRead(set_button);
@@ -250,6 +280,7 @@ void loop() {
       previous_time = millis();
       digitalWrite(cable_1_led, HIGH);
       digitalWrite(cable_2_led, HIGH);
+      digitalWrite(cable_3_led, HIGH);
       winner = 0;
       play_melody( melody_start, duration_start );
     } else {
@@ -264,6 +295,7 @@ void loop() {
     status = 1;
     digitalWrite(cable_1_led, LOW);
     digitalWrite(cable_2_led, LOW);
+    digitalWrite(cable_3_led, LOW);
     blink_status = 0;
     winner = 0;
   }
