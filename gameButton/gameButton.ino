@@ -117,7 +117,6 @@ void play_melody(int melody[], int duration[]) {
     delay(duration[i]);
     noTone(buzzer);
     delay(duration[i] * 0.3);
-
   }
 }
 
@@ -148,12 +147,6 @@ class button {
       light_off();
       too_fast = false;
       is_pressed = false;
-    }
-
-    void do_blink() {
-
-
-
     }
 
     void light_on() {
@@ -222,33 +215,23 @@ class button {
           light_winner();
           break;
         default:
-
           break;
       }
-
     }
-
 };
 
 button button_1(1, cable_1_led, cable_1_button);
 button button_2(2, cable_2_led, cable_2_button);
 button button_3(3, cable_3_led, cable_3_button);
 
-
-
-
 void setup() {
   Serial.begin(9600);
-
-
   pinMode(set_button, INPUT_PULLUP);
   pinMode(reset_button, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
 }
 
-
 /*
-
   LOGIK
 
   1. Nollställd
@@ -265,7 +248,6 @@ void setup() {
   Lampan som tryckte är tänd
   Alla andra släkta
   Ingen kan trycka
-
 
   SET
   Sätter alltid till primad
@@ -284,7 +266,6 @@ void loop() {
   if (buttonVal_set == LOW) {
     if (status == 1) {
       Serial.println("Button set pressed");
-
       button_1.light_on();
       button_2.light_on();
       button_3.light_on();
@@ -293,7 +274,6 @@ void loop() {
       button_1.update();
       button_2.update();
       button_3.update();
-
       status = 2;
     } else {
       play_melody( melody_error, duration_error );
