@@ -104,22 +104,13 @@ int cable_2_led = 10;
 int cable_2_button = 9;
 int cable_3_led = 7;
 int cable_3_button = 8;
-
-
 int buzzer = 13;
-
 int set_button = A5;
 int reset_button = A3;
 int status = 1;
-unsigned long previous_time;
-int blink_status = 0;
-int winner = 0;
 
 void play_melody(int melody[], int duration[]) {
   for (int i = 1; i < melody[0]; i++) {
-    Serial.print(i);
-    Serial.print(" ");
-    Serial.println(melody[i]);
     if (melody[i] != 0) {
       tone(buzzer, melody[i]);
     }
@@ -130,15 +121,126 @@ void play_melody(int melody[], int duration[]) {
   }
 }
 
+class button {
+    int button_number;
+    int led_pin;
+    int button_pin;
+    boolean too_fast = false;
+    unsigned long too_fast_time = millis();
+    int button_blink = 0;
+    unsigned long previous_time = millis();
+    boolean is_winner = false;
+    boolean is_pressed = false;
+
+  public:
+    button(int in_button_number, int in_pin_led, int in_pin_button) {
+      led_pin = in_pin_led;
+      button_pin = in_pin_button;
+      button_number = in_button_number;
+      pinMode(led_pin, OUTPUT);
+      pinMode(button_pin, INPUT_PULLUP);
+
+    }
+    void reset() {
+      button_blink = 0;
+      is_winner = false;
+      previous_time = millis();
+      light_off();
+      too_fast = false;
+      is_pressed = false;
+    }
+
+    void do_blink() {
+
+
+
+    }
+
+    void light_on() {
+      digitalWrite(led_pin, HIGH);
+    }
+    void light_off() {
+      digitalWrite(led_pin, LOW);
+    }
+
+    void light_winner() {
+      if (is_winner) {
+        light_on();
+      } else {
+        light_off();
+      }
+    }
+
+    void check_pressed() {
+      if (digitalRead(button_pin) == LOW) {
+        Serial.print("Button ");
+        Serial.print(button_number);
+        Serial.println(" pressed");
+        if (too_fast) {
+          // Reset timer again for being too fast.
+          too_fast_time = millis();
+          light_off();
+        } else if (status == 1) {
+          // pressing too early
+          light_off();
+          too_fast_time = millis();
+          too_fast = true;
+          Serial.println("Too fast");
+        } else if (status == 2) {
+          is_winner = true;
+          play_melody( melody_1, duration_1 );
+          status = 3;
+        } else {
+          play_melody( melody_error, duration_error );
+        }
+      }
+    }
+
+    void update() {
+      check_pressed();
+
+      switch (status) {
+        case 1:
+          break;
+        case 2:
+          if (millis() < too_fast_time + 5000) {
+            button_blink = 0;
+          } else if (millis() - 100 > previous_time) {
+            too_fast = false;
+            previous_time = millis();
+            if ( button_blink == 0) {
+              button_blink = 1;
+              light_on();
+            } else {
+              button_blink = 0;
+              light_off();
+            }
+          }
+          break;
+        case 3:
+          // A winner is found
+          light_winner();
+          break;
+        default:
+
+          break;
+      }
+
+    }
+
+};
+
+button button_1(1, cable_1_led, cable_1_button);
+button button_2(2, cable_2_led, cable_2_button);
+button button_3(3, cable_3_led, cable_3_button);
+
+
+
+
 void setup() {
   Serial.begin(9600);
 
-  pinMode(cable_1_button, INPUT_PULLUP);
-  pinMode(cable_1_led, OUTPUT);
-  pinMode(cable_2_button, INPUT_PULLUP);
-  pinMode(cable_2_led, OUTPUT);
-  pinMode(cable_3_button, INPUT_PULLUP);
-  pinMode(cable_3_led, OUTPUT);
+
   pinMode(set_button, INPUT_PULLUP);
   pinMode(reset_button, INPUT_PULLUP);
   pinMode(buzzer, OUTPUT);
@@ -152,11 +254,12 @@ void setup() {
   1. Nollställd
   Inga lampor lyser
   Ingen kan trycka
+  Om någon trycker inaktiveras knappen i 5 sekunder
 
   2. Primad
   Alla lampor blinkar
-  Alla kan trycka
-  Den som trycker winner
+  Om någon har en inaktiverad knapp gör ett tryck att man får vänta 5 sek till
+  Den som trycker först winner
 
   3. Vinst
   Lampan som tryckte är tänd
@@ -173,116 +276,25 @@ void setup() {
 
 void loop() {
 
-  switch (status) {
-    case 1:
-      // RESET, do nothing ontill SET is pressed
-      break;
-    case 2:
-      if (millis() - 100 > previous_time) {
-        previous_time = millis();
-        if (blink_status == 0) {
-          blink_status = 1;
-          digitalWrite(cable_1_led, HIGH);
-          digitalWrite(cable_2_led, HIGH);
-          digitalWrite(cable_3_led, HIGH);
-        } else {
-          blink_status = 0;
-          digitalWrite(cable_1_led, LOW);
-          digitalWrite(cable_2_led, LOW);
-          digitalWrite(cable_3_led, LOW);
-        }
-        Serial.println("Blink");
-      }
-
-      break;
-    case 3:
-      switch (winner) {
-        case 1:
-          digitalWrite(cable_1_led, HIGH);
-          digitalWrite(cable_2_led, LOW);
-          digitalWrite(cable_3_led, LOW);
-          break;
-        case 2:
-          digitalWrite(cable_1_led, LOW);
-          digitalWrite(cable_2_led, HIGH);
-          digitalWrite(cable_3_led, LOW);
-          break;
-        case 3:
-          digitalWrite(cable_1_led, LOW);
-          digitalWrite(cable_2_led, LOW);
-          digitalWrite(cable_3_led, HIGH);
-          break;
-        default:
-
-          break;
-      }
-
-
-
-      break;
-    default:
-
-      break;
-  }
-
-  int buttonVal_1 = digitalRead(cable_1_button);
-  if (buttonVal_1 == LOW) {
-    Serial.println("Button 1 pressed");
-    if (status == 2) {
-      winner = 1;
-      status = 3;
-      digitalWrite(cable_1_led, HIGH);
-      digitalWrite(cable_2_led, HIGH);
-      digitalWrite(cable_3_led, HIGH);
-      play_melody( melody_1, duration_1 );
-    } else {
-      play_melody( melody_error, duration_error );
-    }
-  }
-
-  int buttonVal_2 = digitalRead(cable_2_button);
-  if (buttonVal_2 == LOW) {
-    Serial.println("Button 2 pressed");
-    if (status == 2) {
-      winner = 2;
-      status = 3;
-      digitalWrite(cable_1_led, HIGH);
-      digitalWrite(cable_2_led, HIGH);
-      digitalWrite(cable_3_led, HIGH);
-      play_melody( melody_1, duration_1 );
-    } else {
-      play_melody( melody_error, duration_error );
-    }
-  }
-  int buttonVal_3 = digitalRead(cable_3_button);
-  if (buttonVal_3 == LOW) {
-    Serial.println("Button 2 pressed");
-    if (status == 2) {
-      winner = 3;
-      status = 3;
-      digitalWrite(cable_1_led, HIGH);
-      digitalWrite(cable_2_led, HIGH);
-      digitalWrite(cable_3_led, HIGH);
-      play_melody( melody_1, duration_1 );
-    } else {
-      play_melody( melody_error, duration_error );
-    }
-  }
-
+  button_1.update();
+  button_2.update();
+  button_3.update();
 
   int buttonVal_set = digitalRead(set_button);
   if (buttonVal_set == LOW) {
     if (status == 1) {
       Serial.println("Button set pressed");
-      Serial.println("Status = 2");
-      status = 2;
-      blink_status = 1;
-      previous_time = millis();
-      digitalWrite(cable_1_led, HIGH);
-      digitalWrite(cable_2_led, HIGH);
-      digitalWrite(cable_3_led, HIGH);
-      winner = 0;
+
+      button_1.light_on();
+      button_2.light_on();
+      button_3.light_on();
       play_melody( melody_start, duration_start );
+      // Check for cheating by pressing the button to early
+      button_1.update();
+      button_2.update();
+      button_3.update();
+
+      status = 2;
     } else {
       play_melody( melody_error, duration_error );
     }
@@ -291,12 +303,9 @@ void loop() {
   int buttonVal_reset = digitalRead(reset_button);
   if (buttonVal_reset == LOW) {
     Serial.println("Button reset pressed");
-    Serial.println("Status = 1");
     status = 1;
-    digitalWrite(cable_1_led, LOW);
-    digitalWrite(cable_2_led, LOW);
-    digitalWrite(cable_3_led, LOW);
-    blink_status = 0;
-    winner = 0;
+    button_1.reset();
+    button_2.reset();
+    button_3.reset();
   }
 }
